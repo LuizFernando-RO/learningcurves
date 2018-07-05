@@ -182,3 +182,84 @@ for model, dataset in modelsAcc.items():
 		plt.legend()
 		plt.title(name)
 		plt.show()
+
+
+
+def importDataset(path, delimiter):
+
+	X = []
+	Y = []
+
+	with open(path) as file:
+
+		for line in file:
+
+			v = line.strip().split(delimiter)
+
+			X.append(v[:-1])
+			Y.append(v[-1])
+
+	return X, Y
+
+def oneHotEncoding(Y):
+
+	classes = []
+
+	for i in Y:
+
+		if i not in classes:
+
+			classes.append(i)
+
+	OH_Y = np.zeros((Y.shape[0], len(classes)))
+
+	for i in range(Y.shape[0]):
+
+		OH_Y[i, classes.index(Y[i])] = 1.
+
+	return OH_Y
+
+#BINARY
+
+def banana():
+
+	X, Y = importDataset("banana.dat", ',')
+
+	X = np.array(X)
+	Y = np.array(Y)
+
+	OH_Y = oneHotEncoding(Y)
+
+	print(X.shape, Y.shape, OH_Y.shape)
+
+	return
+
+def diabetes():
+
+	X, Y = importDataset("pima-indians-diabetes.data", ',')
+
+	X = np.array(X)
+	Y = np.array(Y)
+
+	OH_Y = oneHotEncoding(Y)
+
+	print(X.shape, Y.shape, OH_Y.shape)
+
+	return
+
+def liver():
+
+	X, Y = importDataset("bupa.data", ',')
+
+	X = np.array(X)
+	Y = np.array(Y)
+
+	OH_Y = oneHotEncoding(Y)
+
+	print(X.shape, Y.shape, OH_Y.shape)
+
+	return
+
+banana()
+diabetes()
+liver()

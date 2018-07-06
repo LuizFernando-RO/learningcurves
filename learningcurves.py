@@ -261,5 +261,5 @@ def liver():
 	return
 
 banana()
-diabetes()
-liver()
+#diabetes()
+#liver()

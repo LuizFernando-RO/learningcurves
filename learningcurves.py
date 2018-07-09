@@ -1,38 +1,18 @@
 import numpy as np
-from sklearn import datasets, model_selection
+from sklearn import model_selection
 from sklearn.metrics import accuracy_score
 import wisardpkg as wp
 import matplotlib.pyplot as plt
+import importDatasets as id
 
-def groupByClass(X, Y):
+nBits = {'banana':20,'diabetes':20,'liver':20,'ecoli':20,'glass':20,'iris': 20,'vehicle':20,'wine':20}
+address = {'banana':20,'diabetes':20,'liver':20,'ecoli':20,'glass':20,'iris': 20,'vehicle':20,'wine':20}
 
-	d = {}
+nTimes = 1
 
-	for i in range(len(X)):
+#mins = {{'banana':np.inf,'diabetes':np.inf,'liver':np.inf,'ecoli':np.inf,'glass':np.inf,'iris':np.inf,'vehicle':np.inf,'wine':np.inf}}
 
-		if Y[i] in d.keys():
-
-			d[Y[i]].append(X[i])
-
-		else:
-
-			d[Y[i]] = [X[i]]
-
-	return d
-
-def getIthExamples(group, index):
-
-	examples = []
-	classes = []
-
-	for k, v in group.items():
-
-		for i in range(index+1):
-
-			examples.append(v[i])
-			classes.append(k)
-
-	return examples, classes
+#confirmed
 
 def binarize(X, nBits):
 
@@ -76,27 +56,115 @@ def binarize(X, nBits):
 
 					bin_X[i].append(0)
 
-	return bin_X
+	return np.array(bin_X)
 
-def correction(Y):
+def oneHotEncoding(Y, labels):
 
-	Y2 = []
+	OH_Y = np.zeros((Y.shape[0], len(labels)))
 
 	for i in range(Y.shape[0]):
 
-		Y2.append(str(Y[i]))
+		OH_Y[i, labels.index(Y[i])] = 1.
 
-	return Y2
+	return OH_Y
 
-def wisardCurve(X_train, X_test, Y_train, Y_test):
+def groupByClass(X, Y):
 
-	bin_X_train = binarize(X_train, nBits[name])
-	bin_X_test = binarize(X_test, nBits[name])
+	d = {}
 
-	Y_train = correction(Y_train)
-	Y_test = correction(Y_test)
+	for i in range(len(X)):
 
-	group = groupByClass(bin_X_train, Y_train)
+		if Y[i] in d.keys():
+
+			d[Y[i]].append(i)
+
+		else:
+
+			d[Y[i]] = [i]
+
+	return d
+
+def additiveActivation(a, b, x):
+    
+    return 1.0 / 1.0 + np.exp( -1 * ( np.dot(a, x) + b) )
+
+def hiddenLayerMatrix(N,L,a,b,X):
+    
+    H = np.zeros((N,L))
+    
+    for i in range(H.shape[0]):
+        for j in range(H.shape[1]):
+            H[i,j] = additiveActivation(a[j],b[j],X[i])
+    
+    return H
+
+def normalize(X, minimum, maximum):
+    
+    normX = X
+    
+    maxAttr = []
+    minAttr = []
+    
+    for i in range(X.shape[1]):
+        
+        maxAttr.append( max(normX[:,i]) )
+        minAttr.append( min(normX[:,i]) )
+        
+    for i in range(X.shape[0]):
+        
+        for j in range(X.shape[1]):
+            
+            if maxAttr[j] - minAttr[j] == 0:
+            
+                normX[i,j] = 0
+                
+            else:
+                
+                std = (X[i,j] - minAttr[j]) / (maxAttr[j] - minAttr[j])
+            
+                normX[i,j] = std * (maximum - minimum) + minimum
+
+    return normX
+
+#unconfirmed
+	
+def getIthExamples(data, Y, group, index):
+
+	batchX = []
+	batchY = []
+
+	for k, v in group.items():
+	
+		sliceX = data[v[:index]]
+		sliceY = Y[v[:index]]
+	
+		for i in range(sliceX.shape[0]):
+	
+			batchX.append(sliceX[i])
+			batchY.append(sliceY[i])
+		
+	return np.array(batchX), np.array(batchY)
+
+'''
+def getIthExamples(group, index):
+
+	examples = []
+	classes = []
+
+	for k, v in group.items():
+
+		for i in range(index+1):
+
+			examples.append(v[i])
+			classes.append(k)
+
+	examples = np.array(examples)
+	classes = np.array(classes)
+			
+	return examples, classes
+'''
+	
+def wisardCurve(X_train, X_test, Y_train, Y_test, name, group):
 
 	min = np.inf
 
@@ -108,15 +176,15 @@ def wisardCurve(X_train, X_test, Y_train, Y_test):
 
 	a = []
 
-	for i in range(min):
-
-		X_batch, Y_batch = getIthExamples(group, i)
+	for i in range(1, min+1):
 
 		wsd = wp.Wisard(address[name])
+	
+		for cls, idx in group.items():
+		
+			wsd.train(X_train[idx[:i]], Y_train[idx[:i]])
 
-		wsd.train(X_batch, Y_batch)
-
-		pred = wsd.classify(bin_X_test)
+		pred = wsd.classify(X_test)
 
 		acc = accuracy_score(Y_test, pred)
 
@@ -142,124 +210,836 @@ def evenArray(data):
 
 	return l
 
-#loading datasets
-
-iris = datasets.load_iris()
-digits = datasets.load_digits()
-diabetes = datasets.load_diabetes()
-wine = datasets.load_wine()
-breastCancer = datasets.load_breast_cancer()
-
-datasets = {'iris': iris}#, 'digits' : digits, 'diabetes' : diabetes, 'wine' : wine, 'breast cancer' : breastCancer}
-nBits = {'iris': 20}#, 'digits' : digits, 'diabetes' : diabetes, 'wine' : wine, 'breast cancer' : breastCancer}
-address = {'iris': 20}#, 'digits' : digits, 'diabetes' : diabetes, 'wine' : wine, 'breast cancer' : breastCancer}
-datasetAcc = {'iris': []}#, 'digits' : digits, 'diabetes' : diabetes, 'wine' : wine, 'breast cancer' : breastCancer}
-modelsAcc = {'wisard': {'iris' : []}}
-
-#algorithm
-
-for i in range(50):
-
-	for name, dataset in datasets.items():
-
-		X_train, X_test, Y_train, Y_test = model_selection.train_test_split(dataset.data, dataset.target, test_size=0.3)
-
-		modelsAcc['wisard'][name].append(wisardCurve(X_train, X_test, Y_train, Y_test))
-
-for model, dataset in modelsAcc.items():
-
-	print(model)
-
-	for name, data in dataset.items():
-
-		acc = np.array(evenArray(data))
-
-		mean = np.mean(acc, axis=0)
-
-		plt.plot(mean, label=model)
-		plt.ylabel("Accuracy")
-		plt.xlabel("Size of training data")
-		plt.legend()
-		plt.title(name)
-		plt.show()
-
-
-
-def importDataset(path, delimiter):
-
-	X = []
-	Y = []
-
-	with open(path) as file:
-
-		for line in file:
-
-			v = line.strip().split(delimiter)
-
-			X.append(v[:-1])
-			Y.append(v[-1])
-
-	return X, Y
-
-def oneHotEncoding(Y):
-
-	classes = []
-
-	for i in Y:
-
-		if i not in classes:
-
-			classes.append(i)
-
-	OH_Y = np.zeros((Y.shape[0], len(classes)))
-
-	for i in range(Y.shape[0]):
-
-		OH_Y[i, classes.index(Y[i])] = 1.
-
-	return OH_Y
-
-#BINARY
+#experiments
 
 def banana():
 
-	X, Y = importDataset("banana.dat", ',')
+	print('BANANA')
+    
+	name = 'banana'
+	
+	labels = ["1.0","-1.0"]
 
-	X = np.array(X)
-	Y = np.array(Y)
+	X, Y = id.importBanana()
+	
+	wisardRet = []
+	elmRet = []
+	
+	L = 1000
+	l = 2**-22
+	
+	for j in range(nTimes):
+	
+		X_train, X_test, Y_train, Y_test = model_selection.train_test_split(X, Y, test_size=0.3)
 
-	OH_Y = oneHotEncoding(Y)
+		#for wisard
+		bin_X_train = binarize(X_train, nBits[name])
+		bin_X_test = binarize(X_test, nBits[name])
+		
+		#for elm
+		OH_Y_train = oneHotEncoding(Y_train, labels)
+		OH_Y_test = oneHotEncoding(Y_test, labels)
 
-	print(X.shape, Y.shape, OH_Y.shape)
+		elm_X_train = normalize(X_train, -1, 1)
+		elm_X_test = normalize(X_test, -1, 1)
+		
+		group = groupByClass(bin_X_train, Y_train)
+		group_train = groupByClass(elm_X_train, Y_train)
 
-	return
+		N = elm_X_train.shape[0]
+		d = elm_X_train.shape[1]
+		
+		a = np.random.rand(L,d)
+		b = np.random.rand(L)
+		
+		min = np.inf
 
+		for k in group.keys():
+
+			if len(group[k]) < min:
+
+				min = len(group[k])
+		
+		wisardAccs = [0.]
+		elmAccs = [0.]
+		
+		for i in range(1,min):
+			
+			#wisard
+			wsd = wp.Wisard(address[name])
+
+			for cls, idx in group.items():
+			
+				wsd.train(bin_X_train[idx[:i]], Y_train[idx[:i]])
+
+			pred = wsd.classify(bin_X_test)
+
+			wisardAcc = accuracy_score(Y_test, pred)
+
+			wisardAccs.append(wisardAcc)
+			
+			#elm
+			
+			batchX, batchY = getIthExamples(elm_X_train, OH_Y_train, group_train, i)			
+						
+			trainH = hiddenLayerMatrix(batchX.shape[0],L,a,b,batchX)
+			
+			transp = np.transpose(trainH)
+			eye = np.eye(trainH.shape[0])
+			big = np.dot( transp, np.linalg.inv( (eye / l) + np.dot(trainH, transp) )  )
+			
+			B = np.dot( big , batchY )
+			
+			testH = hiddenLayerMatrix(elm_X_test.shape[0],L,a,b,elm_X_test)
+        
+			elm_pred = np.dot(testH, B)
+			
+			elm_acc = 0.0
+        
+			for i in range(OH_Y_test.shape[0]):
+            
+				if(np.argmax(OH_Y_test[i]) == np.argmax(elm_pred[i])):
+                
+					elm_acc += 1
+					
+			elmAcc = elm_acc / OH_Y_test.shape[0]
+			
+			elmAccs.append(elmAcc)
+				
+		wisardRet.append(wisardAccs)
+		elmRet.append(elmAccs)
+	
+	wisardRet = np.array(evenArray(wisardRet))
+	elmRet = np.array(evenArray(elmRet))
+		
+	wisardMean = np.mean(wisardRet, axis=0)
+	elmMean = np.mean(elmRet, axis=0)
+
+	plt.plot(wisardMean, label='wisard')
+	plt.plot(elmMean, label='elm')
+	plt.ylabel("Accuracy")
+	plt.xlabel("Size of training data")
+	plt.legend()
+	plt.title('banana')
+	plt.ylim(ymax=1.0, ymin=0.0)
+	
+	plt.show()
+
+#
+#banana()
+	
 def diabetes():
 
-	X, Y = importDataset("pima-indians-diabetes.data", ',')
+	print('DIABETES')
+    
+	name = 'diabetes'
+	
+	labels = ['1', '0']
 
-	X = np.array(X)
-	Y = np.array(Y)
+	X, Y = id.importDiabetes()
+	
+	wisardRet = []
+	elmRet = []
+	
+	L = 1000
+	l = 2**-2
+	
+	for j in range(nTimes):
+	
+		X_train, X_test, Y_train, Y_test = model_selection.train_test_split(X, Y, test_size=0.3)
 
-	OH_Y = oneHotEncoding(Y)
+		#for wisard
+		bin_X_train = binarize(X_train, nBits[name])
+		bin_X_test = binarize(X_test, nBits[name])
+		
+		#for elm
+		OH_Y_train = oneHotEncoding(Y_train, labels)
+		OH_Y_test = oneHotEncoding(Y_test, labels)
 
-	print(X.shape, Y.shape, OH_Y.shape)
+		elm_X_train = normalize(X_train, -1, 1)
+		elm_X_test = normalize(X_test, -1, 1)
+		
+		group = groupByClass(bin_X_train, Y_train)
+		group_train = groupByClass(elm_X_train, Y_train)
 
-	return
+		N = elm_X_train.shape[0]
+		d = elm_X_train.shape[1]
+		
+		a = np.random.rand(L,d)
+		b = np.random.rand(L)
+		
+		min = np.inf
 
+		for k in group.keys():
+
+			if len(group[k]) < min:
+
+				min = len(group[k])
+		
+		wisardAccs = [0.]
+		elmAccs = [0.]
+		
+		for i in range(1,min):
+			
+			#wisard
+			wsd = wp.Wisard(address[name])
+
+			for cls, idx in group.items():
+			
+				wsd.train(bin_X_train[idx[:i]], Y_train[idx[:i]])
+
+			pred = wsd.classify(bin_X_test)
+
+			wisardAcc = accuracy_score(Y_test, pred)
+
+			wisardAccs.append(wisardAcc)
+			
+			#elm
+			
+			batchX, batchY = getIthExamples(elm_X_train, OH_Y_train, group_train, i)			
+						
+			trainH = hiddenLayerMatrix(batchX.shape[0],L,a,b,batchX)
+			
+			transp = np.transpose(trainH)
+			eye = np.eye(trainH.shape[0])
+			big = np.dot( transp, np.linalg.inv( (eye / l) + np.dot(trainH, transp) )  )
+			
+			B = np.dot( big , batchY )
+			
+			testH = hiddenLayerMatrix(elm_X_test.shape[0],L,a,b,elm_X_test)
+        
+			elm_pred = np.dot(testH, B)
+			
+			elm_acc = 0.0
+        
+			for i in range(OH_Y_test.shape[0]):
+            
+				if(np.argmax(OH_Y_test[i]) == np.argmax(elm_pred[i])):
+                
+					elm_acc += 1
+					
+			elmAcc = elm_acc / OH_Y_test.shape[0]
+			
+			elmAccs.append(elmAcc)
+				
+		wisardRet.append(wisardAccs)
+		elmRet.append(elmAccs)
+	
+	wisardRet = np.array(evenArray(wisardRet))
+	elmRet = np.array(evenArray(elmRet))
+		
+	wisardMean = np.mean(wisardRet, axis=0)
+	elmMean = np.mean(elmRet, axis=0)
+
+	plt.plot(wisardMean, label='wisard')
+	plt.plot(elmMean, label='elm')
+	plt.ylabel("Accuracy")
+	plt.xlabel("Size of training data")
+	plt.legend()
+	plt.title('diabetes')
+	plt.ylim(ymax=1.0, ymin=0.0)
+	
+	plt.show()
+
+#ok
+diabetes()
+	
 def liver():
 
-	X, Y = importDataset("bupa.data", ',')
+	print('LIVER')
+    
+	name = 'liver'
+	
+	labels = ['1', '2']
 
-	X = np.array(X)
-	Y = np.array(Y)
+	X, Y = id.importLiver()
+	
+	wisardRet = []
+	elmRet = []
+	
+	L = 1000
+	l = 2**1
+	
+	for j in range(nTimes):
+	
+		X_train, X_test, Y_train, Y_test = model_selection.train_test_split(X, Y, test_size=0.3)
 
-	OH_Y = oneHotEncoding(Y)
+		#for wisard
+		bin_X_train = binarize(X_train, nBits[name])
+		bin_X_test = binarize(X_test, nBits[name])
+		
+		#for elm
+		OH_Y_train = oneHotEncoding(Y_train, labels)
+		OH_Y_test = oneHotEncoding(Y_test, labels)
 
-	print(X.shape, Y.shape, OH_Y.shape)
+		elm_X_train = normalize(X_train, -1, 1)
+		elm_X_test = normalize(X_test, -1, 1)
+		
+		group = groupByClass(bin_X_train, Y_train)
+		group_train = groupByClass(elm_X_train, Y_train)
 
-	return
+		N = elm_X_train.shape[0]
+		d = elm_X_train.shape[1]
+		
+		a = np.random.rand(L,d)
+		b = np.random.rand(L)
+		
+		min = np.inf
 
-banana()
-#diabetes()
-#liver()
+		for k in group.keys():
+
+			if len(group[k]) < min:
+
+				min = len(group[k])
+		
+		wisardAccs = [0.]
+		elmAccs = [0.]
+		
+		for i in range(1,min):
+			
+			#wisard
+			wsd = wp.Wisard(address[name])
+
+			for cls, idx in group.items():
+			
+				wsd.train(bin_X_train[idx[:i]], Y_train[idx[:i]])
+
+			pred = wsd.classify(bin_X_test)
+
+			wisardAcc = accuracy_score(Y_test, pred)
+
+			wisardAccs.append(wisardAcc)
+			
+			#elm
+			
+			batchX, batchY = getIthExamples(elm_X_train, OH_Y_train, group_train, i)			
+						
+			trainH = hiddenLayerMatrix(batchX.shape[0],L,a,b,batchX)
+			
+			transp = np.transpose(trainH)
+			eye = np.eye(trainH.shape[0])
+			big = np.dot( transp, np.linalg.inv( (eye / l) + np.dot(trainH, transp) )  )
+			
+			B = np.dot( big , batchY )
+			
+			testH = hiddenLayerMatrix(elm_X_test.shape[0],L,a,b,elm_X_test)
+        
+			elm_pred = np.dot(testH, B)
+			
+			elm_acc = 0.0
+        
+			for i in range(OH_Y_test.shape[0]):
+            
+				if(np.argmax(OH_Y_test[i]) == np.argmax(elm_pred[i])):
+                
+					elm_acc += 1
+					
+			elmAcc = elm_acc / OH_Y_test.shape[0]
+			
+			elmAccs.append(elmAcc)
+				
+		wisardRet.append(wisardAccs)
+		elmRet.append(elmAccs)
+	
+	wisardRet = np.array(evenArray(wisardRet))
+	elmRet = np.array(evenArray(elmRet))
+		
+	wisardMean = np.mean(wisardRet, axis=0)
+	elmMean = np.mean(elmRet, axis=0)
+
+	plt.plot(wisardMean, label='wisard')
+	plt.plot(elmMean, label='elm')
+	plt.ylabel("Accuracy")
+	plt.xlabel("Size of training data")
+	plt.legend()
+	plt.title('liver')
+	plt.ylim(ymax=1.0, ymin=0.0)
+	
+	plt.show()
+	
+#ok
+liver()
+	
+def ecoli():
+
+	print('ECOLI')
+    
+	name = 'ecoli'
+	
+	labels = ['cp','im','pp','imU','om','omL','imL','imS']
+
+	X, Y = id.importEcoli()
+	
+	ret = []
+	
+	for j in range(nTimes):
+	
+		X_train, X_test, Y_train, Y_test = model_selection.train_test_split(X, Y, test_size=0.3)
+
+		#for wisard
+		bin_X_train = binarize(X_train, nBits[name])
+		bin_X_test = binarize(X_test, nBits[name])
+		
+		#for elm
+		OH_Y_train = oneHotEncoding(Y_train, labels)
+		OH_Y_test = oneHotEncoding(Y_test, labels)
+
+		group = groupByClass(bin_X_train, Y_train)
+
+		min = np.inf
+
+		for k in group.keys():
+
+			if len(group[k]) < min:
+
+				min = len(group[k])
+		
+		accs = [0.]
+		
+		for i in range(1, min+1):
+
+			wsd = wp.Wisard(address[name])
+		
+			for cls, idx in group.items():
+			
+				wsd.train(bin_X_train[idx[:i]], Y_train[idx[:i]])
+
+			pred = wsd.classify(bin_X_test)
+
+			acc = accuracy_score(Y_test, pred)
+
+			accs.append(acc)
+		
+		ret.append(accs)
+	 
+	ret = np.array(evenArray(ret))
+		
+	mean = np.mean(ret, axis=0)
+
+	plt.plot(mean, label='wisard')
+	plt.ylabel("Accuracy")
+	plt.xlabel("Size of training data")
+	plt.legend()
+	plt.title('ecoli')
+	plt.ylim(ymax=1.0, ymin=0.0)
+	
+	plt.show()
+	
+#balance problems
+#ecoli()
+	
+def glass():
+
+	print('GLASS')
+    
+	name = 'glass'
+	
+	labels = ['1','2','3','4','5','6','7']
+
+	X, Y = id.importGlass()
+	
+	ret = []
+	
+	for j in range(nTimes):
+	
+		X_train, X_test, Y_train, Y_test = model_selection.train_test_split(X, Y, test_size=0.3)
+
+		#for wisard
+		bin_X_train = binarize(X_train, nBits[name])
+		bin_X_test = binarize(X_test, nBits[name])
+		
+		#for elm
+		OH_Y_train = oneHotEncoding(Y_train, labels)
+		OH_Y_test = oneHotEncoding(Y_test, labels)
+
+		group = groupByClass(bin_X_train, Y_train)
+
+		min = np.inf
+
+		for k in group.keys():
+
+			if len(group[k]) < min:
+
+				min = len(group[k])
+		
+		accs = [0.]
+		
+		for i in range(1, min+1):
+
+			wsd = wp.Wisard(address[name])
+		
+			for cls, idx in group.items():
+			
+				wsd.train(bin_X_train[idx[:i]], Y_train[idx[:i]])
+
+			pred = wsd.classify(bin_X_test)
+
+			acc = accuracy_score(Y_test, pred)
+
+			accs.append(acc)
+		
+		ret.append(accs)
+	 
+	ret = np.array(evenArray(ret))
+		
+	mean = np.mean(ret, axis=0)
+
+	plt.plot(mean, label='wisard')
+	plt.ylabel("Accuracy")
+	plt.xlabel("Size of training data")
+	plt.legend()
+	plt.title('glass')
+	plt.ylim(ymax=1.0, ymin=0.0)
+	
+	plt.show()
+	
+#balance problems
+#glass()
+	
+def iris():
+
+	print('IRIS')
+    
+	name = 'iris'
+	
+	labels = ['Iris-setosa', 'Iris-versicolor', 'Iris-virginica']
+
+	X, Y = id.importIris()
+	
+	wisardRet = []
+	elmRet = []
+	
+	L = 1000
+	l = 2**5
+	
+	for j in range(nTimes):
+	
+		X_train, X_test, Y_train, Y_test = model_selection.train_test_split(X, Y, test_size=0.3)
+
+		#for wisard
+		bin_X_train = binarize(X_train, nBits[name])
+		bin_X_test = binarize(X_test, nBits[name])
+		
+		#for elm
+		OH_Y_train = oneHotEncoding(Y_train, labels)
+		OH_Y_test = oneHotEncoding(Y_test, labels)
+
+		elm_X_train = normalize(X_train, -1, 1)
+		elm_X_test = normalize(X_test, -1, 1)
+		
+		group = groupByClass(bin_X_train, Y_train)
+		group_train = groupByClass(elm_X_train, Y_train)
+
+		N = elm_X_train.shape[0]
+		d = elm_X_train.shape[1]
+		
+		a = np.random.rand(L,d)
+		b = np.random.rand(L)
+		
+		min = np.inf
+
+		for k in group.keys():
+
+			if len(group[k]) < min:
+
+				min = len(group[k])
+		
+		wisardAccs = [0.]
+		elmAccs = [0.]
+		
+		for i in range(1,min):
+			
+			#wisard
+			wsd = wp.Wisard(address[name])
+
+			for cls, idx in group.items():
+			
+				wsd.train(bin_X_train[idx[:i]], Y_train[idx[:i]])
+
+			pred = wsd.classify(bin_X_test)
+
+			wisardAcc = accuracy_score(Y_test, pred)
+
+			wisardAccs.append(wisardAcc)
+			
+			#elm
+			
+			batchX, batchY = getIthExamples(elm_X_train, OH_Y_train, group_train, i)			
+						
+			trainH = hiddenLayerMatrix(batchX.shape[0],L,a,b,batchX)
+			
+			transp = np.transpose(trainH)
+			eye = np.eye(trainH.shape[0])
+			big = np.dot( transp, np.linalg.inv( (eye / l) + np.dot(trainH, transp) )  )
+			
+			B = np.dot( big , batchY )
+			
+			testH = hiddenLayerMatrix(elm_X_test.shape[0],L,a,b,elm_X_test)
+        
+			elm_pred = np.dot(testH, B)
+			
+			elm_acc = 0.0
+        
+			for i in range(OH_Y_test.shape[0]):
+            
+				if(np.argmax(OH_Y_test[i]) == np.argmax(elm_pred[i])):
+                
+					elm_acc += 1
+					
+			elmAcc = elm_acc / OH_Y_test.shape[0]
+			
+			elmAccs.append(elmAcc)
+				
+		wisardRet.append(wisardAccs)
+		elmRet.append(elmAccs)
+	
+	wisardRet = np.array(evenArray(wisardRet))
+	elmRet = np.array(evenArray(elmRet))
+		
+	wisardMean = np.mean(wisardRet, axis=0)
+	elmMean = np.mean(elmRet, axis=0)
+
+	plt.plot(wisardMean, label='wisard')
+	plt.plot(elmMean, label='elm')
+	plt.ylabel("Accuracy")
+	plt.xlabel("Size of training data")
+	plt.legend()
+	plt.title('iris')
+	plt.ylim(ymax=1.0, ymin=0.0)
+	
+	plt.show()
+	
+#ok	
+iris()
+
+def vehicle():
+
+	print('VEHICLE')
+    
+	name = 'vehicle'
+	
+	labels = ['opel','saab','bus','van']
+
+	X, Y = id.importVehicle()
+	
+	wisardRet = []
+	elmRet = []
+	
+	L = 1000
+	l = 2**7
+	
+	for j in range(nTimes):
+	
+		X_train, X_test, Y_train, Y_test = model_selection.train_test_split(X, Y, test_size=0.3)
+
+		#for wisard
+		bin_X_train = binarize(X_train, nBits[name])
+		bin_X_test = binarize(X_test, nBits[name])
+		
+		#for elm
+		OH_Y_train = oneHotEncoding(Y_train, labels)
+		OH_Y_test = oneHotEncoding(Y_test, labels)
+
+		elm_X_train = normalize(X_train, -1, 1)
+		elm_X_test = normalize(X_test, -1, 1)
+		
+		group = groupByClass(bin_X_train, Y_train)
+		group_train = groupByClass(elm_X_train, Y_train)
+
+		N = elm_X_train.shape[0]
+		d = elm_X_train.shape[1]
+		
+		a = np.random.rand(L,d)
+		b = np.random.rand(L)
+		
+		min = np.inf
+
+		for k in group.keys():
+
+			if len(group[k]) < min:
+
+				min = len(group[k])
+		
+		wisardAccs = [0.]
+		elmAccs = [0.]
+		
+		for i in range(1,min):
+			
+			#wisard
+			wsd = wp.Wisard(address[name])
+
+			for cls, idx in group.items():
+			
+				wsd.train(bin_X_train[idx[:i]], Y_train[idx[:i]])
+
+			pred = wsd.classify(bin_X_test)
+
+			wisardAcc = accuracy_score(Y_test, pred)
+
+			wisardAccs.append(wisardAcc)
+			
+			#elm
+			
+			batchX, batchY = getIthExamples(elm_X_train, OH_Y_train, group_train, i)			
+						
+			trainH = hiddenLayerMatrix(batchX.shape[0],L,a,b,batchX)
+			
+			transp = np.transpose(trainH)
+			eye = np.eye(trainH.shape[0])
+			big = np.dot( transp, np.linalg.inv( (eye / l) + np.dot(trainH, transp) )  )
+			
+			B = np.dot( big , batchY )
+			
+			testH = hiddenLayerMatrix(elm_X_test.shape[0],L,a,b,elm_X_test)
+        
+			elm_pred = np.dot(testH, B)
+			
+			elm_acc = 0.0
+        
+			for i in range(OH_Y_test.shape[0]):
+            
+				if(np.argmax(OH_Y_test[i]) == np.argmax(elm_pred[i])):
+                
+					elm_acc += 1
+					
+			elmAcc = elm_acc / OH_Y_test.shape[0]
+			
+			elmAccs.append(elmAcc)
+				
+		wisardRet.append(wisardAccs)
+		elmRet.append(elmAccs)
+	
+	wisardRet = np.array(evenArray(wisardRet))
+	elmRet = np.array(evenArray(elmRet))
+		
+	wisardMean = np.mean(wisardRet, axis=0)
+	elmMean = np.mean(elmRet, axis=0)
+
+	plt.plot(wisardMean, label='wisard')
+	plt.plot(elmMean, label='elm')
+	plt.ylabel("Accuracy")
+	plt.xlabel("Size of training data")
+	plt.legend()
+	plt.title('vehicle')
+	plt.ylim(ymax=1.0, ymin=0.0)
+	
+	plt.show()
+
+#ok
+vehicle()
+	
+def wine():
+
+	print('WINE')
+    
+	name = 'wine'
+	
+	labels = ['1','2','3']
+
+	X, Y = id.importWine()
+	
+	wisardRet = []
+	elmRet = []
+	
+	L = 1000
+	l = 2**-1
+	
+	for j in range(nTimes):
+	
+		X_train, X_test, Y_train, Y_test = model_selection.train_test_split(X, Y, test_size=0.3)
+
+		#for wisard
+		bin_X_train = binarize(X_train, nBits[name])
+		bin_X_test = binarize(X_test, nBits[name])
+		
+		#for elm
+		OH_Y_train = oneHotEncoding(Y_train, labels)
+		OH_Y_test = oneHotEncoding(Y_test, labels)
+
+		elm_X_train = normalize(X_train, -1, 1)
+		elm_X_test = normalize(X_test, -1, 1)
+		
+		group = groupByClass(bin_X_train, Y_train)
+		group_train = groupByClass(elm_X_train, Y_train)
+
+		N = elm_X_train.shape[0]
+		d = elm_X_train.shape[1]
+		
+		a = np.random.rand(L,d)
+		b = np.random.rand(L)
+		
+		min = np.inf
+
+		for k in group.keys():
+
+			if len(group[k]) < min:
+
+				min = len(group[k])
+		
+		wisardAccs = [0.]
+		elmAccs = [0.]
+		
+		for i in range(1,min):
+			
+			#wisard
+			wsd = wp.Wisard(address[name])
+
+			for cls, idx in group.items():
+			
+				wsd.train(bin_X_train[idx[:i]], Y_train[idx[:i]])
+
+			pred = wsd.classify(bin_X_test)
+
+			wisardAcc = accuracy_score(Y_test, pred)
+
+			wisardAccs.append(wisardAcc)
+			
+			#elm
+			
+			batchX, batchY = getIthExamples(elm_X_train, OH_Y_train, group_train, i)			
+						
+			trainH = hiddenLayerMatrix(batchX.shape[0],L,a,b,batchX)
+			
+			transp = np.transpose(trainH)
+			eye = np.eye(trainH.shape[0])
+			big = np.dot( transp, np.linalg.inv( (eye / l) + np.dot(trainH, transp) )  )
+			
+			B = np.dot( big , batchY )
+			
+			testH = hiddenLayerMatrix(elm_X_test.shape[0],L,a,b,elm_X_test)
+        
+			elm_pred = np.dot(testH, B)
+			
+			elm_acc = 0.0
+        
+			for i in range(OH_Y_test.shape[0]):
+            
+				if(np.argmax(OH_Y_test[i]) == np.argmax(elm_pred[i])):
+                
+					elm_acc += 1
+					
+			elmAcc = elm_acc / OH_Y_test.shape[0]
+			
+			elmAccs.append(elmAcc)
+				
+		wisardRet.append(wisardAccs)
+		elmRet.append(elmAccs)
+	
+	wisardRet = np.array(evenArray(wisardRet))
+	elmRet = np.array(evenArray(elmRet))
+		
+	wisardMean = np.mean(wisardRet, axis=0)
+	elmMean = np.mean(elmRet, axis=0)
+
+	plt.plot(wisardMean, label='wisard')
+	plt.plot(elmMean, label='elm')
+	plt.ylabel("Accuracy")
+	plt.xlabel("Size of training data")
+	plt.legend()
+	plt.title('wine')
+	plt.ylim(ymax=1.0, ymin=0.0)
+	
+	plt.show()
+
+#ok
+wine()

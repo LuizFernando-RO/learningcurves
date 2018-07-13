@@ -495,7 +495,7 @@ def diabetes():
 	plt.legend()
 	plt.xscale('log')
 	plt.title('diabetes-log')
-	plt.savefig('diabetes-log.png')
+	plt.savegif('Images/diabetes-log.png')
 
 	plt.clf()
 
@@ -505,7 +505,9 @@ def diabetes():
 	plt.xlabel("Size of training data")
 	plt.legend()
 	plt.title('diabetes')	
-	plt.savefig('diabetes.png')
+	plt.savegif('Images/diabetes.png')
+
+	plt.clf()
 
 def diabetes2():
 
@@ -609,7 +611,7 @@ def diabetes2():
 	plt.legend()
 	plt.xscale('log')
 	plt.title('diabetes-log')
-	plt.savefig('diabetes-logv2.png')
+	plt.savegif('Images/diabetes-logv2.png')
 
 	plt.clf()
 
@@ -619,7 +621,8 @@ def diabetes2():
 	plt.xlabel("Size of training data")
 	plt.legend()
 	plt.title('diabetes')
-	plt.savefig('diabetesv2.png')
+	plt.savegif('Images/diabetesv2.png')
+	plt.clf()
 
 #ok
 diabetes()
@@ -735,8 +738,7 @@ def liver():
 	plt.legend()
 	plt.xscale('log')
 	plt.title('liver-log')
-	plt.savefig('liver-log.png')
-
+	plt.savegif('Images/liver-log.png')
 	plt.clf()
 
 	plt.plot(wisardMean, label='wisard')
@@ -745,7 +747,8 @@ def liver():
 	plt.xlabel("Size of training data")
 	plt.legend()
 	plt.title('liver')
-	plt.savefig('liver.png')
+	plt.savegif('Images/liver.png')
+	plt.clf()
 
 def liver2():
 
@@ -849,7 +852,7 @@ def liver2():
 	plt.legend()
 	plt.xscale('log')
 	plt.title('liver-log')
-	plt.savefig('liver-logv2.png')
+	plt.savegif('Images/liver-logv2.png')
 
 	plt.clf()
 
@@ -859,7 +862,7 @@ def liver2():
 	plt.xlabel("Size of training data")
 	plt.legend()
 	plt.title('liver')
-	plt.savefig('liverv2.png')
+	plt.savegif('Images/liverv2.png')
 
 #ok
 liver()
@@ -1113,7 +1116,7 @@ def iris():
 	plt.legend()
 	plt.xscale('log')
 	plt.title('iris-log')
-	plt.savefig('iris-log.png')
+	plt.savegif('Images/iris-log.png')
 
 	plt.clf()
 
@@ -1123,7 +1126,7 @@ def iris():
 	plt.xlabel("Size of training data")
 	plt.legend()
 	plt.title('iris')
-	plt.savefig('iris.png')
+	plt.savegif('Images/iris.png')
 
 	plt.clf()
 
@@ -1229,7 +1232,7 @@ def iris2():
 	plt.legend()
 	plt.xscale('log')
 	plt.title('iris-log')
-	plt.savefig('iris-logv2.png')
+	plt.savegif('Images/iris-logv2.png')
 
 	plt.clf()
 
@@ -1239,7 +1242,7 @@ def iris2():
 	plt.xlabel("Size of training data")
 	plt.legend()
 	plt.title('iris')
-	plt.savefig('irisv2.png')
+	plt.savegif('Images/irisv2.png')
 
 	plt.clf()
 	
@@ -1357,7 +1360,7 @@ def vehicle():
 	plt.legend()
 	plt.xscale('log')
 	plt.title('vehicle-log')
-	plt.savefig('vehicle-log.png')
+	plt.savegif('Images/vehicle-log.png')
 
 	plt.clf()
 
@@ -1367,7 +1370,8 @@ def vehicle():
 	plt.xlabel("Size of training data")
 	plt.legend()
 	plt.title('vehicle')
-	plt.savefig('vehicle.png')
+	plt.savegif('Images/vehicle.png')
+	plt.clf()
 
 def vehicle2():
 
@@ -1471,7 +1475,7 @@ def vehicle2():
 	plt.legend()
 	plt.xscale('log')
 	plt.title('vehicle-log')
-	plt.savefig('vehicle-logv2.png')
+	plt.savegif('Images/vehicle-logv2.png')
 
 	plt.clf()
 
@@ -1481,7 +1485,8 @@ def vehicle2():
 	plt.xlabel("Size of training data")
 	plt.legend()
 	plt.title('vehicle')
-	plt.savefig('vehiclev2.png')
+	plt.savegif('Images/vehiclev2.png')
+	plt.clf()
 
 
 #ok
@@ -1598,7 +1603,7 @@ def wine():
 	plt.legend()
 	plt.xscale('log')
 	plt.title('wine-log')
-	plt.savefig('wine-log.png')
+	plt.savegif('Images/wine-log.png')
 
 	plt.clf()
 
@@ -1608,7 +1613,8 @@ def wine():
 	plt.xlabel("Size of training data")
 	plt.legend()
 	plt.title('wine')
-	plt.savefig('wine.png')
+	plt.savegif('Images/wine.png')
+	plt.clf()
 
 def wine2():
 
@@ -1712,7 +1718,7 @@ def wine2():
 	plt.legend()
 	plt.xscale('log')
 	plt.title('wine-log')
-	plt.savefig('wine-logv2.png')
+	plt.savegif('Images/wine-logv2.png')
 
 	plt.clf()
 
@@ -1722,7 +1728,8 @@ def wine2():
 	plt.xlabel("Size of training data")
 	plt.legend()
 	plt.title('wine')
-	plt.savefig('winev2.png')
+	plt.savegif('Images/winev2.png')
+	plt.clf()
 
 
 #ok

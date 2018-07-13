@@ -402,6 +402,8 @@ def diabetes():
 	l = 2**-2
 	
 	for j in range(nTimes):
+
+		print('e',j)
 	
 		X_train, X_test, Y_train, Y_test = model_selection.train_test_split(X, Y, test_size=0.3)
 
@@ -495,7 +497,7 @@ def diabetes():
 	plt.legend()
 	plt.xscale('log')
 	plt.title('diabetes-log')
-	plt.savegif('Images/diabetes-log.png')
+	plt.savefig('Images/diabetes-log.png')
 
 	plt.clf()
 
@@ -505,7 +507,7 @@ def diabetes():
 	plt.xlabel("Size of training data")
 	plt.legend()
 	plt.title('diabetes')	
-	plt.savegif('Images/diabetes.png')
+	plt.savefig('Images/diabetes.png')
 
 	plt.clf()
 
@@ -611,7 +613,7 @@ def diabetes2():
 	plt.legend()
 	plt.xscale('log')
 	plt.title('diabetes-log')
-	plt.savegif('Images/diabetes-logv2.png')
+	plt.savefig('Images/diabetes-logv2.png')
 
 	plt.clf()
 
@@ -621,12 +623,12 @@ def diabetes2():
 	plt.xlabel("Size of training data")
 	plt.legend()
 	plt.title('diabetes')
-	plt.savegif('Images/diabetesv2.png')
+	plt.savefig('Images/diabetesv2.png')
 	plt.clf()
 
 #ok
-diabetes()
-diabetes2()
+#diabetes()
+#diabetes2()
 	
 def liver():
 
@@ -645,6 +647,8 @@ def liver():
 	l = 2**1
 	
 	for j in range(nTimes):
+
+		print('e',j)
 	
 		X_train, X_test, Y_train, Y_test = model_selection.train_test_split(X, Y, test_size=0.3)
 
@@ -738,7 +742,7 @@ def liver():
 	plt.legend()
 	plt.xscale('log')
 	plt.title('liver-log')
-	plt.savegif('Images/liver-log.png')
+	plt.savefig('Images/liver-log.png')
 	plt.clf()
 
 	plt.plot(wisardMean, label='wisard')
@@ -747,7 +751,7 @@ def liver():
 	plt.xlabel("Size of training data")
 	plt.legend()
 	plt.title('liver')
-	plt.savegif('Images/liver.png')
+	plt.savefig('Images/liver.png')
 	plt.clf()
 
 def liver2():
@@ -768,9 +772,9 @@ def liver2():
 	
 	for j in range(nTimes):
 
-		X, Y = shuffle(X, Y)
-	
 		print('e',j)
+
+		X, Y = shuffle(X, Y)
 
 		group = groupByClass(X, Y)
 
@@ -852,7 +856,7 @@ def liver2():
 	plt.legend()
 	plt.xscale('log')
 	plt.title('liver-log')
-	plt.savegif('Images/liver-logv2.png')
+	plt.savefig('Images/liver-logv2.png')
 
 	plt.clf()
 
@@ -862,11 +866,12 @@ def liver2():
 	plt.xlabel("Size of training data")
 	plt.legend()
 	plt.title('liver')
-	plt.savegif('Images/liverv2.png')
+	plt.savefig('Images/liverv2.png')
+	plt.clf()
 
 #ok
-liver()
-liver2()
+#liver()
+#liver2()
 	
 def ecoli():
 
@@ -949,6 +954,8 @@ def glass():
 	ret = []
 	
 	for j in range(nTimes):
+
+
 	
 		X_train, X_test, Y_train, Y_test = model_selection.train_test_split(X, Y, test_size=0.3)
 
@@ -1116,7 +1123,7 @@ def iris():
 	plt.legend()
 	plt.xscale('log')
 	plt.title('iris-log')
-	plt.savegif('Images/iris-log.png')
+	plt.savefig('Images/iris-log.png')
 
 	plt.clf()
 
@@ -1126,7 +1133,7 @@ def iris():
 	plt.xlabel("Size of training data")
 	plt.legend()
 	plt.title('iris')
-	plt.savegif('Images/iris.png')
+	plt.savefig('Images/iris.png')
 
 	plt.clf()
 
@@ -1232,7 +1239,7 @@ def iris2():
 	plt.legend()
 	plt.xscale('log')
 	plt.title('iris-log')
-	plt.savegif('Images/iris-logv2.png')
+	plt.savefig('Images/iris-logv2.png')
 
 	plt.clf()
 
@@ -1242,13 +1249,13 @@ def iris2():
 	plt.xlabel("Size of training data")
 	plt.legend()
 	plt.title('iris')
-	plt.savegif('Images/irisv2.png')
+	plt.savefig('Images/irisv2.png')
 
 	plt.clf()
 	
 #ok	
 iris()
-iris2()
+#iris2()
 
 def vehicle():
 
@@ -1267,6 +1274,8 @@ def vehicle():
 	l = 2**7
 	
 	for j in range(nTimes):
+
+		print('e',j)
 	
 		X_train, X_test, Y_train, Y_test = model_selection.train_test_split(X, Y, test_size=0.3)
 
@@ -1360,7 +1369,7 @@ def vehicle():
 	plt.legend()
 	plt.xscale('log')
 	plt.title('vehicle-log')
-	plt.savegif('Images/vehicle-log.png')
+	plt.savefig('Images/vehicle-log.png')
 
 	plt.clf()
 
@@ -1370,7 +1379,7 @@ def vehicle():
 	plt.xlabel("Size of training data")
 	plt.legend()
 	plt.title('vehicle')
-	plt.savegif('Images/vehicle.png')
+	plt.savefig('Images/vehicle.png')
 	plt.clf()
 
 def vehicle2():
@@ -1475,7 +1484,7 @@ def vehicle2():
 	plt.legend()
 	plt.xscale('log')
 	plt.title('vehicle-log')
-	plt.savegif('Images/vehicle-logv2.png')
+	plt.savefig('Images/vehicle-logv2.png')
 
 	plt.clf()
 
@@ -1485,13 +1494,13 @@ def vehicle2():
 	plt.xlabel("Size of training data")
 	plt.legend()
 	plt.title('vehicle')
-	plt.savegif('Images/vehiclev2.png')
+	plt.savefig('Images/vehiclev2.png')
 	plt.clf()
 
 
 #ok
-vehicle()
-vehicle2()
+#vehicle()
+#vehicle2()
 	
 def wine():
 
@@ -1510,6 +1519,8 @@ def wine():
 	l = 2**-1
 	
 	for j in range(nTimes):
+
+		print('e',j)
 	
 		X_train, X_test, Y_train, Y_test = model_selection.train_test_split(X, Y, test_size=0.3)
 
@@ -1603,7 +1614,7 @@ def wine():
 	plt.legend()
 	plt.xscale('log')
 	plt.title('wine-log')
-	plt.savegif('Images/wine-log.png')
+	plt.savefig('Images/wine-log.png')
 
 	plt.clf()
 
@@ -1613,7 +1624,7 @@ def wine():
 	plt.xlabel("Size of training data")
 	plt.legend()
 	plt.title('wine')
-	plt.savegif('Images/wine.png')
+	plt.savefig('Images/wine.png')
 	plt.clf()
 
 def wine2():
@@ -1718,7 +1729,7 @@ def wine2():
 	plt.legend()
 	plt.xscale('log')
 	plt.title('wine-log')
-	plt.savegif('Images/wine-logv2.png')
+	plt.savefig('Images/wine-logv2.png')
 
 	plt.clf()
 
@@ -1728,10 +1739,10 @@ def wine2():
 	plt.xlabel("Size of training data")
 	plt.legend()
 	plt.title('wine')
-	plt.savegif('Images/winev2.png')
+	plt.savefig('Images/winev2.png')
 	plt.clf()
 
 
 #ok
-wine()
-wine2()
+#wine()
+#wine2()

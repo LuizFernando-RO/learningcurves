@@ -8,11 +8,68 @@ import importDatasets as id
 nBits = {'banana':20,'diabetes':20,'liver':20,'ecoli':20,'glass':20,'iris': 20,'vehicle':20,'wine':20}
 address = {'banana':20,'diabetes':20,'liver':20,'ecoli':20,'glass':20,'iris': 20,'vehicle':20,'wine':20}
 
-nTimes = 1
+nTimes = 5
 
 #mins = {{'banana':np.inf,'diabetes':np.inf,'liver':np.inf,'ecoli':np.inf,'glass':np.inf,'iris':np.inf,'vehicle':np.inf,'wine':np.inf}}
 
 #confirmed
+
+def minGroup(group):
+
+	min = np.inf
+
+	for k, v in group.items():
+
+		if len(v) < min:
+
+			min = len(v)
+
+	return min
+
+def split(X, Y, group, i):
+
+	X_train = []
+	X_test = []
+	Y_train = []
+	Y_test = []
+
+	for k, v in group.items():
+
+		for j in range(len(v[:i])):
+
+			X_train.append(X[v[j]])
+			Y_train.append(Y[v[j]])
+
+		for j in range(i,len(v)):
+
+			X_test.append(X[v[j]])
+			Y_test.append(Y[v[j]])
+
+	X_train = np.array(X_train)
+	X_test = np.array(X_test)
+	Y_train = np.array(Y_train)
+	Y_test = np.array(Y_test)
+
+	return X_train, X_test, Y_train, Y_test
+
+def shuffle(X, Y):
+
+	newX = []
+	newY = []
+
+	l = np.array(range(X.shape[0]))
+
+	np.random.shuffle(l)
+
+	for i in range(l.shape[0]):
+
+		newX.append(X[i])
+		newY.append(Y[i])
+
+	newX = np.array(newX)
+	newY = np.array(newY)
+
+	return newX, newY
 
 def binarize(X, nBits):
 
@@ -436,13 +493,137 @@ def diabetes():
 	plt.ylabel("Accuracy")
 	plt.xlabel("Size of training data")
 	plt.legend()
-	plt.title('diabetes')
-	plt.ylim(ymax=1.0, ymin=0.0)
+	plt.xscale('log')
+	plt.title('diabetes-log')
+	plt.savefig('diabetes-log.png')
+
+	plt.clf()
+
+	plt.plot(wisardMean, label='wisard')
+	plt.plot(elmMean, label='elm')
+	plt.ylabel("Accuracy")
+	plt.xlabel("Size of training data")
+	plt.legend()
+	plt.title('diabetes')	
+	plt.savefig('diabetes.png')
+
+def diabetes2():
+
+	print('DIABETES')
+    
+	name = 'diabetes'
 	
-	plt.show()
+	labels = ['1', '0']
+
+	X, Y = id.importDiabetes()
+	
+	wisardRet = []
+	elmRet = []
+	
+	L = 1000
+	l = 2**-2
+	
+	for j in range(nTimes):
+
+		X, Y = shuffle(X, Y)
+	
+		print('e',j)
+
+		group = groupByClass(X, Y)
+
+		min = minGroup(group)
+
+		wisardAccs = [0.]
+		elmAccs = [0.]
+
+		for i in range(1, min):
+
+			wX_train, wX_test, wY_train, wY_test = split(X, Y, group, i)
+			eX_train, eX_test, eY_train, eY_test = split(X, Y, group, i)
+
+			wX_train = binarize(wX_train, nBits[name])
+			wX_test = binarize(wX_test, nBits[name])
+
+			eX_train = normalize(eX_train, -1, 1)
+			eX_test = normalize(eX_test, -1, 1)
+
+			OH_Y_train = oneHotEncoding(eY_train, labels)
+			OH_Y_test = oneHotEncoding(eY_test, labels)
+	
+			N = eX_train.shape[0]
+			d = eX_train.shape[1]
+			
+			a = np.random.rand(L,d)
+			b = np.random.rand(L)
+				
+			#wisard
+			wsd = wp.Wisard(address[name])
+			
+			wsd.train(wX_train, wY_train)
+
+			pred = wsd.classify(wX_test)
+
+			wisardAcc = accuracy_score(wY_test, pred)
+
+			wisardAccs.append(wisardAcc)
+
+			#elm
+						
+			trainH = hiddenLayerMatrix(eX_train.shape[0],L,a,b,eX_train)
+			
+			transp = np.transpose(trainH)
+			eye = np.eye(trainH.shape[0])
+			big = np.dot( transp, np.linalg.inv( (eye / l) + np.dot(trainH, transp) )  )
+			
+			B = np.dot( big , OH_Y_train )
+			
+			testH = hiddenLayerMatrix(eX_test.shape[0],L,a,b,eX_test)
+        
+			elm_pred = np.dot(testH, B)
+			
+			elm_acc = 0.0
+        
+			for i in range(OH_Y_test.shape[0]):
+            
+				if(np.argmax(OH_Y_test[i]) == np.argmax(elm_pred[i])):
+                
+					elm_acc += 1
+					
+			elmAcc = elm_acc / OH_Y_test.shape[0]
+			
+			elmAccs.append(elmAcc)
+	
+		wisardRet.append(wisardAccs)
+		elmRet.append(elmAccs)
+	
+	wisardRet = np.array(evenArray(wisardRet))
+	elmRet = np.array(evenArray(elmRet))
+		
+	wisardMean = np.mean(wisardRet, axis=0)
+	elmMean = np.mean(elmRet, axis=0)
+
+	plt.plot(wisardMean, label='wisard')
+	plt.plot(elmMean, label='elm')
+	plt.ylabel("Accuracy")
+	plt.xlabel("Size of training data")
+	plt.legend()
+	plt.xscale('log')
+	plt.title('diabetes-log')
+	plt.savefig('diabetes-logv2.png')
+
+	plt.clf()
+
+	plt.plot(wisardMean, label='wisard')
+	plt.plot(elmMean, label='elm')
+	plt.ylabel("Accuracy")
+	plt.xlabel("Size of training data")
+	plt.legend()
+	plt.title('diabetes')
+	plt.savefig('diabetesv2.png')
 
 #ok
 diabetes()
+diabetes2()
 	
 def liver():
 
@@ -552,13 +733,137 @@ def liver():
 	plt.ylabel("Accuracy")
 	plt.xlabel("Size of training data")
 	plt.legend()
+	plt.xscale('log')
+	plt.title('liver-log')
+	plt.savefig('liver-log.png')
+
+	plt.clf()
+
+	plt.plot(wisardMean, label='wisard')
+	plt.plot(elmMean, label='elm')
+	plt.ylabel("Accuracy")
+	plt.xlabel("Size of training data")
+	plt.legend()
 	plt.title('liver')
-	plt.ylim(ymax=1.0, ymin=0.0)
+	plt.savefig('liver.png')
+
+def liver2():
+
+	print('LIVER')
+    
+	name = 'liver'
 	
-	plt.show()
+	labels = ['1', '2']
+
+	X, Y = id.importLiver()
 	
+	wisardRet = []
+	elmRet = []
+	
+	L = 1000
+	l = 2**1
+	
+	for j in range(nTimes):
+
+		X, Y = shuffle(X, Y)
+	
+		print('e',j)
+
+		group = groupByClass(X, Y)
+
+		min = minGroup(group)
+
+		wisardAccs = [0.]
+		elmAccs = [0.]
+
+		for i in range(1, min):
+
+			wX_train, wX_test, wY_train, wY_test = split(X, Y, group, i)
+			eX_train, eX_test, eY_train, eY_test = split(X, Y, group, i)
+
+			wX_train = binarize(wX_train, nBits[name])
+			wX_test = binarize(wX_test, nBits[name])
+
+			eX_train = normalize(eX_train, -1, 1)
+			eX_test = normalize(eX_test, -1, 1)
+
+			OH_Y_train = oneHotEncoding(eY_train, labels)
+			OH_Y_test = oneHotEncoding(eY_test, labels)
+	
+			N = eX_train.shape[0]
+			d = eX_train.shape[1]
+			
+			a = np.random.rand(L,d)
+			b = np.random.rand(L)
+				
+			#wisard
+			wsd = wp.Wisard(address[name])
+			
+			wsd.train(wX_train, wY_train)
+
+			pred = wsd.classify(wX_test)
+
+			wisardAcc = accuracy_score(wY_test, pred)
+
+			wisardAccs.append(wisardAcc)
+
+			#elm
+						
+			trainH = hiddenLayerMatrix(eX_train.shape[0],L,a,b,eX_train)
+			
+			transp = np.transpose(trainH)
+			eye = np.eye(trainH.shape[0])
+			big = np.dot( transp, np.linalg.inv( (eye / l) + np.dot(trainH, transp) )  )
+			
+			B = np.dot( big , OH_Y_train )
+			
+			testH = hiddenLayerMatrix(eX_test.shape[0],L,a,b,eX_test)
+        
+			elm_pred = np.dot(testH, B)
+			
+			elm_acc = 0.0
+        
+			for i in range(OH_Y_test.shape[0]):
+            
+				if(np.argmax(OH_Y_test[i]) == np.argmax(elm_pred[i])):
+                
+					elm_acc += 1
+					
+			elmAcc = elm_acc / OH_Y_test.shape[0]
+			
+			elmAccs.append(elmAcc)
+	
+		wisardRet.append(wisardAccs)
+		elmRet.append(elmAccs)
+	
+	wisardRet = np.array(evenArray(wisardRet))
+	elmRet = np.array(evenArray(elmRet))
+		
+	wisardMean = np.mean(wisardRet, axis=0)
+	elmMean = np.mean(elmRet, axis=0)
+
+	plt.plot(wisardMean, label='wisard')
+	plt.plot(elmMean, label='elm')
+	plt.ylabel("Accuracy")
+	plt.xlabel("Size of training data")
+	plt.legend()
+	plt.xscale('log')
+	plt.title('liver-log')
+	plt.savefig('liver-logv2.png')
+
+	plt.clf()
+
+	plt.plot(wisardMean, label='wisard')
+	plt.plot(elmMean, label='elm')
+	plt.ylabel("Accuracy")
+	plt.xlabel("Size of training data")
+	plt.legend()
+	plt.title('liver')
+	plt.savefig('liverv2.png')
+
 #ok
 liver()
+liver2()
 	
 def ecoli():
 
@@ -713,6 +1018,8 @@ def iris():
 	l = 2**5
 	
 	for j in range(nTimes):
+
+		print('e',j)
 	
 		X_train, X_test, Y_train, Y_test = model_selection.train_test_split(X, Y, test_size=0.3)
 
@@ -804,13 +1111,141 @@ def iris():
 	plt.ylabel("Accuracy")
 	plt.xlabel("Size of training data")
 	plt.legend()
+	plt.xscale('log')
+	plt.title('iris-log')
+	plt.savefig('iris-log.png')
+
+	plt.clf()
+
+	plt.plot(wisardMean, label='wisard')
+	plt.plot(elmMean, label='elm')
+	plt.ylabel("Accuracy")
+	plt.xlabel("Size of training data")
+	plt.legend()
 	plt.title('iris')
-	plt.ylim(ymax=1.0, ymin=0.0)
+	plt.savefig('iris.png')
+
+	plt.clf()
+
+def iris2():
+
+	print('IRIS')
+    
+	name = 'iris'
 	
-	plt.show()
+	labels = ['Iris-setosa', 'Iris-versicolor', 'Iris-virginica']
+
+	X, Y = id.importIris()
+	
+	wisardRet = []
+	elmRet = []
+	
+	L = 1000
+	l = 2**5
+	
+	for j in range(nTimes):
+
+		X, Y = shuffle(X, Y)
+	
+		print('e',j)
+
+		group = groupByClass(X, Y)
+
+		min = minGroup(group)
+
+		wisardAccs = [0.]
+		elmAccs = [0.]
+
+		for i in range(1, min):
+
+			wX_train, wX_test, wY_train, wY_test = split(X, Y, group, i)
+			eX_train, eX_test, eY_train, eY_test = split(X, Y, group, i)
+
+			wX_train = binarize(wX_train, nBits[name])
+			wX_test = binarize(wX_test, nBits[name])
+
+			eX_train = normalize(eX_train, -1, 1)
+			eX_test = normalize(eX_test, -1, 1)
+
+			OH_Y_train = oneHotEncoding(eY_train, labels)
+			OH_Y_test = oneHotEncoding(eY_test, labels)
+	
+			N = eX_train.shape[0]
+			d = eX_train.shape[1]
+			
+			a = np.random.rand(L,d)
+			b = np.random.rand(L)
+				
+			#wisard
+			wsd = wp.Wisard(address[name])
+			
+			wsd.train(wX_train, wY_train)
+
+			pred = wsd.classify(wX_test)
+
+			wisardAcc = accuracy_score(wY_test, pred)
+
+			wisardAccs.append(wisardAcc)
+
+			#elm
+						
+			trainH = hiddenLayerMatrix(eX_train.shape[0],L,a,b,eX_train)
+			
+			transp = np.transpose(trainH)
+			eye = np.eye(trainH.shape[0])
+			big = np.dot( transp, np.linalg.inv( (eye / l) + np.dot(trainH, transp) )  )
+			
+			B = np.dot( big , OH_Y_train )
+			
+			testH = hiddenLayerMatrix(eX_test.shape[0],L,a,b,eX_test)
+        
+			elm_pred = np.dot(testH, B)
+			
+			elm_acc = 0.0
+        
+			for i in range(OH_Y_test.shape[0]):
+            
+				if(np.argmax(OH_Y_test[i]) == np.argmax(elm_pred[i])):
+                
+					elm_acc += 1
+					
+			elmAcc = elm_acc / OH_Y_test.shape[0]
+			
+			elmAccs.append(elmAcc)
+	
+		wisardRet.append(wisardAccs)
+		elmRet.append(elmAccs)
+	
+	wisardRet = np.array(evenArray(wisardRet))
+	elmRet = np.array(evenArray(elmRet))
+		
+	wisardMean = np.mean(wisardRet, axis=0)
+	elmMean = np.mean(elmRet, axis=0)
+
+	plt.plot(wisardMean, label='wisard')
+	plt.plot(elmMean, label='elm')
+	plt.ylabel("Accuracy")
+	plt.xlabel("Size of training data")
+	plt.legend()
+	plt.xscale('log')
+	plt.title('iris-log')
+	plt.savefig('iris-logv2.png')
+
+	plt.clf()
+
+	plt.plot(wisardMean, label='wisard')
+	plt.plot(elmMean, label='elm')
+	plt.ylabel("Accuracy")
+	plt.xlabel("Size of training data")
+	plt.legend()
+	plt.title('iris')
+	plt.savefig('irisv2.png')
+
+	plt.clf()
 	
 #ok	
 iris()
+iris2()
 
 def vehicle():
 
@@ -920,13 +1355,138 @@ def vehicle():
 	plt.ylabel("Accuracy")
 	plt.xlabel("Size of training data")
 	plt.legend()
+	plt.xscale('log')
+	plt.title('vehicle-log')
+	plt.savefig('vehicle-log.png')
+
+	plt.clf()
+
+	plt.plot(wisardMean, label='wisard')
+	plt.plot(elmMean, label='elm')
+	plt.ylabel("Accuracy")
+	plt.xlabel("Size of training data")
+	plt.legend()
 	plt.title('vehicle')
-	plt.ylim(ymax=1.0, ymin=0.0)
+	plt.savefig('vehicle.png')
+
+def vehicle2():
+
+	print('VEHICLE')
+    
+	name = 'vehicle'
 	
-	plt.show()
+	labels = ['opel','saab','bus','van']
+
+	X, Y = id.importVehicle()
+	
+	wisardRet = []
+	elmRet = []
+	
+	L = 1000
+	l = 2**7
+	
+	for j in range(nTimes):
+
+		X, Y = shuffle(X, Y)
+	
+		print('e',j)
+
+		group = groupByClass(X, Y)
+
+		min = minGroup(group)
+
+		wisardAccs = [0.]
+		elmAccs = [0.]
+
+		for i in range(1, min):
+
+			wX_train, wX_test, wY_train, wY_test = split(X, Y, group, i)
+			eX_train, eX_test, eY_train, eY_test = split(X, Y, group, i)
+
+			wX_train = binarize(wX_train, nBits[name])
+			wX_test = binarize(wX_test, nBits[name])
+
+			eX_train = normalize(eX_train, -1, 1)
+			eX_test = normalize(eX_test, -1, 1)
+
+			OH_Y_train = oneHotEncoding(eY_train, labels)
+			OH_Y_test = oneHotEncoding(eY_test, labels)
+	
+			N = eX_train.shape[0]
+			d = eX_train.shape[1]
+			
+			a = np.random.rand(L,d)
+			b = np.random.rand(L)
+				
+			#wisard
+			wsd = wp.Wisard(address[name])
+			
+			wsd.train(wX_train, wY_train)
+
+			pred = wsd.classify(wX_test)
+
+			wisardAcc = accuracy_score(wY_test, pred)
+
+			wisardAccs.append(wisardAcc)
+
+			#elm
+						
+			trainH = hiddenLayerMatrix(eX_train.shape[0],L,a,b,eX_train)
+			
+			transp = np.transpose(trainH)
+			eye = np.eye(trainH.shape[0])
+			big = np.dot( transp, np.linalg.inv( (eye / l) + np.dot(trainH, transp) )  )
+			
+			B = np.dot( big , OH_Y_train )
+			
+			testH = hiddenLayerMatrix(eX_test.shape[0],L,a,b,eX_test)
+        
+			elm_pred = np.dot(testH, B)
+			
+			elm_acc = 0.0
+        
+			for i in range(OH_Y_test.shape[0]):
+            
+				if(np.argmax(OH_Y_test[i]) == np.argmax(elm_pred[i])):
+                
+					elm_acc += 1
+					
+			elmAcc = elm_acc / OH_Y_test.shape[0]
+			
+			elmAccs.append(elmAcc)
+	
+		wisardRet.append(wisardAccs)
+		elmRet.append(elmAccs)
+	
+	wisardRet = np.array(evenArray(wisardRet))
+	elmRet = np.array(evenArray(elmRet))
+		
+	wisardMean = np.mean(wisardRet, axis=0)
+	elmMean = np.mean(elmRet, axis=0)
+
+	plt.plot(wisardMean, label='wisard')
+	plt.plot(elmMean, label='elm')
+	plt.ylabel("Accuracy")
+	plt.xlabel("Size of training data")
+	plt.legend()
+	plt.xscale('log')
+	plt.title('vehicle-log')
+	plt.savefig('vehicle-logv2.png')
+
+	plt.clf()
+
+	plt.plot(wisardMean, label='wisard')
+	plt.plot(elmMean, label='elm')
+	plt.ylabel("Accuracy")
+	plt.xlabel("Size of training data")
+	plt.legend()
+	plt.title('vehicle')
+	plt.savefig('vehiclev2.png')
+
 
 #ok
 vehicle()
+vehicle2()
 	
 def wine():
 
@@ -1036,10 +1596,135 @@ def wine():
 	plt.ylabel("Accuracy")
 	plt.xlabel("Size of training data")
 	plt.legend()
+	plt.xscale('log')
+	plt.title('wine-log')
+	plt.savefig('wine-log.png')
+
+	plt.clf()
+
+	plt.plot(wisardMean, label='wisard')
+	plt.plot(elmMean, label='elm')
+	plt.ylabel("Accuracy")
+	plt.xlabel("Size of training data")
+	plt.legend()
 	plt.title('wine')
-	plt.ylim(ymax=1.0, ymin=0.0)
+	plt.savefig('wine.png')
+
+def wine2():
+
+	print('WINE')
+    
+	name = 'wine'
 	
-	plt.show()
+	labels = ['1','2','3']
+
+	X, Y = id.importWine()
+	
+	wisardRet = []
+	elmRet = []
+	
+	L = 1000
+	l = 2**-1
+	
+	for j in range(nTimes):
+
+		X, Y = shuffle(X, Y)
+	
+		print('e',j)
+
+		group = groupByClass(X, Y)
+
+		min = minGroup(group)
+
+		wisardAccs = [0.]
+		elmAccs = [0.]
+
+		for i in range(1, min):
+
+			wX_train, wX_test, wY_train, wY_test = split(X, Y, group, i)
+			eX_train, eX_test, eY_train, eY_test = split(X, Y, group, i)
+
+			wX_train = binarize(wX_train, nBits[name])
+			wX_test = binarize(wX_test, nBits[name])
+
+			eX_train = normalize(eX_train, -1, 1)
+			eX_test = normalize(eX_test, -1, 1)
+
+			OH_Y_train = oneHotEncoding(eY_train, labels)
+			OH_Y_test = oneHotEncoding(eY_test, labels)
+	
+			N = eX_train.shape[0]
+			d = eX_train.shape[1]
+			
+			a = np.random.rand(L,d)
+			b = np.random.rand(L)
+				
+			#wisard
+			wsd = wp.Wisard(address[name])
+			
+			wsd.train(wX_train, wY_train)
+
+			pred = wsd.classify(wX_test)
+
+			wisardAcc = accuracy_score(wY_test, pred)
+
+			wisardAccs.append(wisardAcc)
+
+			#elm
+						
+			trainH = hiddenLayerMatrix(eX_train.shape[0],L,a,b,eX_train)
+			
+			transp = np.transpose(trainH)
+			eye = np.eye(trainH.shape[0])
+			big = np.dot( transp, np.linalg.inv( (eye / l) + np.dot(trainH, transp) )  )
+			
+			B = np.dot( big , OH_Y_train )
+			
+			testH = hiddenLayerMatrix(eX_test.shape[0],L,a,b,eX_test)
+        
+			elm_pred = np.dot(testH, B)
+			
+			elm_acc = 0.0
+        
+			for i in range(OH_Y_test.shape[0]):
+            
+				if(np.argmax(OH_Y_test[i]) == np.argmax(elm_pred[i])):
+                
+					elm_acc += 1
+					
+			elmAcc = elm_acc / OH_Y_test.shape[0]
+			
+			elmAccs.append(elmAcc)
+	
+		wisardRet.append(wisardAccs)
+		elmRet.append(elmAccs)
+	
+	wisardRet = np.array(evenArray(wisardRet))
+	elmRet = np.array(evenArray(elmRet))
+		
+	wisardMean = np.mean(wisardRet, axis=0)
+	elmMean = np.mean(elmRet, axis=0)
+
+	plt.plot(wisardMean, label='wisard')
+	plt.plot(elmMean, label='elm')
+	plt.ylabel("Accuracy")
+	plt.xlabel("Size of training data")
+	plt.legend()
+	plt.xscale('log')
+	plt.title('wine-log')
+	plt.savefig('wine-logv2.png')
+
+	plt.clf()
+
+	plt.plot(wisardMean, label='wisard')
+	plt.plot(elmMean, label='elm')
+	plt.ylabel("Accuracy")
+	plt.xlabel("Size of training data")
+	plt.legend()
+	plt.title('wine')
+	plt.savefig('winev2.png')
+
 
 #ok
 wine()
+wine2()

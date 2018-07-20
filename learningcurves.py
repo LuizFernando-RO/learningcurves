@@ -5,6 +5,10 @@ import wisardpkg as wp
 import matplotlib.pyplot as plt
 import importDatasets as id
 
+from sklearn.neural_network import MLPClassifier
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.tree import DecisionTreeClassifier
+
 nBits = {'banana':20,'diabetes':20,'liver':20,'ecoli':20,'glass':20,'iris': 20,'vehicle':20,'wine':20}
 address = {'banana':20,'diabetes':20,'liver':20,'ecoli':20,'glass':20,'iris': 20,'vehicle':20,'wine':20}
 
@@ -1023,6 +1027,9 @@ def iris():
 	
 	wisardRet = []
 	elmRet = []
+	mlpRet = []
+	dtRet = []
+	rfRet = []
 	
 	L = 1000
 	l = 2**5
@@ -1063,6 +1070,9 @@ def iris():
 		
 		wisardAccs = [0.]
 		elmAccs = [0.]
+		mlpAccs = [0.]
+		dtAccs = [0.]
+		rfAccs = [0.]
 		
 		for i in range(1,min):
 			
@@ -1106,18 +1116,60 @@ def iris():
 			elmAcc = elm_acc / OH_Y_test.shape[0]
 			
 			elmAccs.append(elmAcc)
+
+			#mlp
+
+			clf = MLPClassifier(solver='lbfgs', alpha=1e-5, hidden_layer_sizes=(5, 2), random_state=1)
+			clf.fit(batchX, batchY)
+			mlp_pred = clf.predict(elm_X_test)
+			mlpAcc = accuracy_score(OH_Y_test, mlp_pred)
+			mlpAccs.append(mlpAcc)
+
+			#decision tree
+
+			clf = DecisionTreeClassifier(max_depth=None, min_samples_split=2,random_state=0)
+			clf.fit(batchX, batchY)
+			dt_pred = clf.predict(elm_X_test)
+			dtAcc = accuracy_score(OH_Y_test, dt_pred)
+			dtAccs.append(dtAcc)
+
+			#random forest
+
+			clf = RandomForestClassifier(n_estimators=10, max_depth=None,min_samples_split=2, random_state=0)
+			clf.fit(batchX, batchY)
+			rf_pred = clf.predict(elm_X_test)
+			rfAcc = accuracy_score(OH_Y_test, rf_pred)
+			rfAccs.append(rfAcc)
 				
 		wisardRet.append(wisardAccs)
 		elmRet.append(elmAccs)
+		mlpRet.append(mlpAccs)
+		dtRet.append(dtAccs)
+		rfRet.append(rfAccs)
 	
 	wisardRet = np.array(evenArray(wisardRet))
 	elmRet = np.array(evenArray(elmRet))
+	mlpRet = np.array(evenArray(mlpRet))
+	dtRet = np.array(evenArray(dtRet))
+	rfRet = np.array(evenArray(rfRet))
 		
 	wisardMean = np.mean(wisardRet, axis=0)
 	elmMean = np.mean(elmRet, axis=0)
+	mlpMean = np.mean(mlpRet,axis=0)
+	dtMean = np.mean(dtRet,axis=0)
+	rfMean = np.mean(rfRet,axis=0)
 
-	plt.plot(wisardMean, label='wisard')
-	plt.plot(elmMean, label='elm')
+	wisardStDev = np.std(wisardRet, axis=0)
+	elmStDev = np.std(elmRet, axis=0)
+	mlpStDev = np.std(mlpRet,axis=0)
+	dtStDev = np.std(dtRet,axis=0)
+	rfStDev = np.std(rfRet,axis=0)
+
+	plt.errorbar(np.arange(0,wisardMean.shape[0]),wisardMean,yerr=wisardStDev, label='wisard')
+	plt.errorbar(np.arange(0,elmMean.shape[0]), elmMean,yerr=elmStDev, label='elm')
+	plt.errorbar(np.arange(0,mlpMean.shape[0]), mlpMean,yerr=mlpStDev, label='mlp')
+	plt.errorbar(np.arange(0,dtMean.shape[0]), dtMean,yerr=dtStDev, label='dt')
+	plt.errorbar(np.arange(0,rfMean.shape[0]), rfMean,yerr=rfStDev, label='rf')
 	plt.ylabel("Accuracy")
 	plt.xlabel("Size of training data")
 	plt.legend()
@@ -1127,8 +1179,11 @@ def iris():
 
 	plt.clf()
 
-	plt.plot(wisardMean, label='wisard')
-	plt.plot(elmMean, label='elm')
+	plt.errorbar(np.arange(0,wisardMean.shape[0]),wisardMean,yerr=wisardStDev, label='wisard')
+	plt.errorbar(np.arange(0,elmMean.shape[0]), elmMean,yerr=elmStDev, label='elm')
+	plt.errorbar(np.arange(0,mlpMean.shape[0]), mlpMean,yerr=mlpStDev, label='mlp')
+	plt.errorbar(np.arange(0,dtMean.shape[0]), dtMean,yerr=dtStDev, label='dt')
+	plt.errorbar(np.arange(0,rfMean.shape[0]), rfMean,yerr=rfStDev, label='rf')
 	plt.ylabel("Accuracy")
 	plt.xlabel("Size of training data")
 	plt.legend()
@@ -1149,6 +1204,9 @@ def iris2():
 	
 	wisardRet = []
 	elmRet = []
+	mlpRet = []
+	dtRet = []
+	rfRet = []
 	
 	L = 1000
 	l = 2**5
@@ -1165,6 +1223,9 @@ def iris2():
 
 		wisardAccs = [0.]
 		elmAccs = [0.]
+		mlpAccs = [0.]
+		dtAccs = [0.]
+		rfAccs = [0.]
 
 		for i in range(1, min):
 
@@ -1222,39 +1283,84 @@ def iris2():
 			elmAcc = elm_acc / OH_Y_test.shape[0]
 			
 			elmAccs.append(elmAcc)
+
+			#mlp
+
+			clf = MLPClassifier(solver='lbfgs', alpha=1e-5, hidden_layer_sizes=(5, 2), random_state=1)
+			clf.fit(eX_train, OH_Y_train)
+			mlp_pred = clf.predict(eX_test)
+			mlpAcc = accuracy_score(OH_Y_test, mlp_pred)
+			mlpAccs.append(mlpAcc)
+
+			#decision tree
+
+			clf = DecisionTreeClassifier(max_depth=None, min_samples_split=2,random_state=0)
+			clf.fit(eX_train, OH_Y_train)
+			dt_pred = clf.predict(eX_test)
+			dtAcc = accuracy_score(OH_Y_test, dt_pred)
+			dtAccs.append(dtAcc)
+
+			#random forest
+
+			clf = RandomForestClassifier(n_estimators=10, max_depth=None,min_samples_split=2, random_state=0)
+			clf.fit(eX_train, OH_Y_train)
+			rf_pred = clf.predict(eX_test)
+			rfAcc = accuracy_score(OH_Y_test, rf_pred)
+			rfAccs.append(rfAcc)
 	
 		wisardRet.append(wisardAccs)
 		elmRet.append(elmAccs)
+		mlpRet.append(mlpAccs)
+		dtRet.append(dtAccs)
+		rfRet.append(rfAccs)
 	
 	wisardRet = np.array(evenArray(wisardRet))
 	elmRet = np.array(evenArray(elmRet))
+	mlpRet = np.array(evenArray(mlpRet))
+	dtRet = np.array(evenArray(dtRet))
+	rfRet = np.array(evenArray(rfRet))
 		
 	wisardMean = np.mean(wisardRet, axis=0)
 	elmMean = np.mean(elmRet, axis=0)
+	mlpMean = np.mean(mlpRet,axis=0)
+	dtMean = np.mean(dtRet,axis=0)
+	rfMean = np.mean(rfRet,axis=0)
 
-	plt.plot(wisardMean, label='wisard')
-	plt.plot(elmMean, label='elm')
+	wisardStDev = np.std(wisardRet, axis=0)
+	elmStDev = np.std(elmRet, axis=0)
+	mlpStDev = np.std(mlpRet,axis=0)
+	dtStDev = np.std(dtRet,axis=0)
+	rfStDev = np.std(rfRet,axis=0)
+
+	plt.errorbar(np.arange(0,wisardMean.shape[0]),wisardMean,yerr=wisardStDev, label='wisard')
+	plt.errorbar(np.arange(0,elmMean.shape[0]), elmMean,yerr=elmStDev, label='elm')
+	plt.errorbar(np.arange(0,mlpMean.shape[0]), mlpMean,yerr=mlpStDev, label='mlp')
+	plt.errorbar(np.arange(0,dtMean.shape[0]), dtMean,yerr=dtStDev, label='dt')
+	plt.errorbar(np.arange(0,rfMean.shape[0]), rfMean,yerr=rfStDev, label='rf')
 	plt.ylabel("Accuracy")
 	plt.xlabel("Size of training data")
 	plt.legend()
 	plt.xscale('log')
-	plt.title('iris-log')
+	plt.title('iris-logv2')
 	plt.savefig('Images/iris-logv2.png')
 
 	plt.clf()
 
-	plt.plot(wisardMean, label='wisard')
-	plt.plot(elmMean, label='elm')
+	plt.errorbar(np.arange(0,wisardMean.shape[0]),wisardMean,yerr=wisardStDev, label='wisard')
+	plt.errorbar(np.arange(0,elmMean.shape[0]), elmMean,yerr=elmStDev, label='elm')
+	plt.errorbar(np.arange(0,mlpMean.shape[0]), mlpMean,yerr=mlpStDev, label='mlp')
+	plt.errorbar(np.arange(0,dtMean.shape[0]), dtMean,yerr=dtStDev, label='dt')
+	plt.errorbar(np.arange(0,rfMean.shape[0]), rfMean,yerr=rfStDev, label='rf')
 	plt.ylabel("Accuracy")
 	plt.xlabel("Size of training data")
 	plt.legend()
-	plt.title('iris')
+	plt.title('irisv2')
 	plt.savefig('Images/irisv2.png')
 
 	plt.clf()
 	
 #ok	
-iris()
+#iris()
 #iris2()
 
 def vehicle():
@@ -1269,7 +1375,10 @@ def vehicle():
 	
 	wisardRet = []
 	elmRet = []
-	
+	mlpRet = []
+	dtRet = []
+	rfRet = []
+
 	L = 1000
 	l = 2**7
 	
@@ -1309,7 +1418,10 @@ def vehicle():
 		
 		wisardAccs = [0.]
 		elmAccs = [0.]
-		
+		mlpAccs = [0.]
+		dtAccs = [0.]
+		rfAccs = [0.]
+
 		for i in range(1,min):
 			
 			#wisard
@@ -1353,17 +1465,59 @@ def vehicle():
 			
 			elmAccs.append(elmAcc)
 				
+			#mlp
+
+			clf = MLPClassifier(solver='lbfgs', alpha=1e-5, hidden_layer_sizes=(5, 2), random_state=1)
+			clf.fit(batchX, batchY)
+			mlp_pred = clf.predict(elm_X_test)
+			mlpAcc = accuracy_score(OH_Y_test, mlp_pred)
+			mlpAccs.append(mlpAcc)
+
+			#decision tree
+
+			clf = DecisionTreeClassifier(max_depth=None, min_samples_split=2,random_state=0)
+			clf.fit(batchX, batchY)
+			dt_pred = clf.predict(elm_X_test)
+			dtAcc = accuracy_score(OH_Y_test, dt_pred)
+			dtAccs.append(dtAcc)
+
+			#random forest
+
+			clf = RandomForestClassifier(n_estimators=10, max_depth=None,min_samples_split=2, random_state=0)
+			clf.fit(batchX, batchY)
+			rf_pred = clf.predict(elm_X_test)
+			rfAcc = accuracy_score(OH_Y_test, rf_pred)
+			rfAccs.append(rfAcc)
+				
 		wisardRet.append(wisardAccs)
 		elmRet.append(elmAccs)
+		mlpRet.append(mlpAccs)
+		dtRet.append(dtAccs)
+		rfRet.append(rfAccs)
 	
 	wisardRet = np.array(evenArray(wisardRet))
 	elmRet = np.array(evenArray(elmRet))
+	mlpRet = np.array(evenArray(mlpRet))
+	dtRet = np.array(evenArray(dtRet))
+	rfRet = np.array(evenArray(rfRet))
 		
 	wisardMean = np.mean(wisardRet, axis=0)
 	elmMean = np.mean(elmRet, axis=0)
+	mlpMean = np.mean(mlpRet,axis=0)
+	dtMean = np.mean(dtRet,axis=0)
+	rfMean = np.mean(rfRet,axis=0)
 
-	plt.plot(wisardMean, label='wisard')
-	plt.plot(elmMean, label='elm')
+	wisardStDev = np.std(wisardRet, axis=0)
+	elmStDev = np.std(elmRet, axis=0)
+	mlpStDev = np.std(mlpRet,axis=0)
+	dtStDev = np.std(dtRet,axis=0)
+	rfStDev = np.std(rfRet,axis=0)
+
+	plt.errorbar(np.arange(0,wisardMean.shape[0]),wisardMean,yerr=wisardStDev, label='wisard')
+	plt.errorbar(np.arange(0,elmMean.shape[0]), elmMean,yerr=elmStDev, label='elm')
+	plt.errorbar(np.arange(0,mlpMean.shape[0]), mlpMean,yerr=mlpStDev, label='mlp')
+	plt.errorbar(np.arange(0,dtMean.shape[0]), dtMean,yerr=dtStDev, label='dt')
+	plt.errorbar(np.arange(0,rfMean.shape[0]), rfMean,yerr=rfStDev, label='rf')
 	plt.ylabel("Accuracy")
 	plt.xlabel("Size of training data")
 	plt.legend()
@@ -1373,13 +1527,17 @@ def vehicle():
 
 	plt.clf()
 
-	plt.plot(wisardMean, label='wisard')
-	plt.plot(elmMean, label='elm')
+	plt.errorbar(np.arange(0,wisardMean.shape[0]),wisardMean,yerr=wisardStDev, label='wisard')
+	plt.errorbar(np.arange(0,elmMean.shape[0]), elmMean,yerr=elmStDev, label='elm')
+	plt.errorbar(np.arange(0,mlpMean.shape[0]), mlpMean,yerr=mlpStDev, label='mlp')
+	plt.errorbar(np.arange(0,dtMean.shape[0]), dtMean,yerr=dtStDev, label='dt')
+	plt.errorbar(np.arange(0,rfMean.shape[0]), rfMean,yerr=rfStDev, label='rf')
 	plt.ylabel("Accuracy")
 	plt.xlabel("Size of training data")
 	plt.legend()
 	plt.title('vehicle')
 	plt.savefig('Images/vehicle.png')
+
 	plt.clf()
 
 def vehicle2():
@@ -1394,7 +1552,10 @@ def vehicle2():
 	
 	wisardRet = []
 	elmRet = []
-	
+	mlpRet = []
+	dtRet = []
+	rfRet = []
+
 	L = 1000
 	l = 2**7
 	
@@ -1410,6 +1571,9 @@ def vehicle2():
 
 		wisardAccs = [0.]
 		elmAccs = [0.]
+		mlpAccs = [0.]
+		dtAccs = [0.]
+		rfAccs = [0.]
 
 		for i in range(1, min):
 
@@ -1468,39 +1632,85 @@ def vehicle2():
 			
 			elmAccs.append(elmAcc)
 	
+			#mlp
+
+			clf = MLPClassifier(solver='lbfgs', alpha=1e-5, hidden_layer_sizes=(5, 2), random_state=1)
+			clf.fit(eX_train, OH_Y_train)
+			mlp_pred = clf.predict(eX_test)
+			mlpAcc = accuracy_score(OH_Y_test, mlp_pred)
+			mlpAccs.append(mlpAcc)
+
+			#decision tree
+
+			clf = DecisionTreeClassifier(max_depth=None, min_samples_split=2,random_state=0)
+			clf.fit(eX_train, OH_Y_train)
+			dt_pred = clf.predict(eX_test)
+			dtAcc = accuracy_score(OH_Y_test, dt_pred)
+			dtAccs.append(dtAcc)
+
+			#random forest
+
+			clf = RandomForestClassifier(n_estimators=10, max_depth=None,min_samples_split=2, random_state=0)
+			clf.fit(eX_train, OH_Y_train)
+			rf_pred = clf.predict(eX_test)
+			rfAcc = accuracy_score(OH_Y_test, rf_pred)
+			rfAccs.append(rfAcc)
+	
 		wisardRet.append(wisardAccs)
 		elmRet.append(elmAccs)
+		mlpRet.append(mlpAccs)
+		dtRet.append(dtAccs)
+		rfRet.append(rfAccs)
 	
 	wisardRet = np.array(evenArray(wisardRet))
 	elmRet = np.array(evenArray(elmRet))
+	mlpRet = np.array(evenArray(mlpRet))
+	dtRet = np.array(evenArray(dtRet))
+	rfRet = np.array(evenArray(rfRet))
 		
 	wisardMean = np.mean(wisardRet, axis=0)
 	elmMean = np.mean(elmRet, axis=0)
+	mlpMean = np.mean(mlpRet,axis=0)
+	dtMean = np.mean(dtRet,axis=0)
+	rfMean = np.mean(rfRet,axis=0)
 
-	plt.plot(wisardMean, label='wisard')
-	plt.plot(elmMean, label='elm')
+	wisardStDev = np.std(wisardRet, axis=0)
+	elmStDev = np.std(elmRet, axis=0)
+	mlpStDev = np.std(mlpRet,axis=0)
+	dtStDev = np.std(dtRet,axis=0)
+	rfStDev = np.std(rfRet,axis=0)
+
+	plt.errorbar(np.arange(0,wisardMean.shape[0]),wisardMean,yerr=wisardStDev, label='wisard')
+	plt.errorbar(np.arange(0,elmMean.shape[0]), elmMean,yerr=elmStDev, label='elm')
+	plt.errorbar(np.arange(0,mlpMean.shape[0]), mlpMean,yerr=mlpStDev, label='mlp')
+	plt.errorbar(np.arange(0,dtMean.shape[0]), dtMean,yerr=dtStDev, label='dt')
+	plt.errorbar(np.arange(0,rfMean.shape[0]), rfMean,yerr=rfStDev, label='rf')
 	plt.ylabel("Accuracy")
 	plt.xlabel("Size of training data")
 	plt.legend()
 	plt.xscale('log')
-	plt.title('vehicle-log')
+	plt.title('vehicle-logv2')
 	plt.savefig('Images/vehicle-logv2.png')
 
 	plt.clf()
 
-	plt.plot(wisardMean, label='wisard')
-	plt.plot(elmMean, label='elm')
+	plt.errorbar(np.arange(0,wisardMean.shape[0]),wisardMean,yerr=wisardStDev, label='wisard')
+	plt.errorbar(np.arange(0,elmMean.shape[0]), elmMean,yerr=elmStDev, label='elm')
+	plt.errorbar(np.arange(0,mlpMean.shape[0]), mlpMean,yerr=mlpStDev, label='mlp')
+	plt.errorbar(np.arange(0,dtMean.shape[0]), dtMean,yerr=dtStDev, label='dt')
+	plt.errorbar(np.arange(0,rfMean.shape[0]), rfMean,yerr=rfStDev, label='rf')
 	plt.ylabel("Accuracy")
 	plt.xlabel("Size of training data")
 	plt.legend()
-	plt.title('vehicle')
+	plt.title('vehiclev2')
 	plt.savefig('Images/vehiclev2.png')
+
 	plt.clf()
 
 
 #ok
 #vehicle()
-#vehicle2()
+vehicle2()
 	
 def wine():
 
@@ -1514,6 +1724,9 @@ def wine():
 	
 	wisardRet = []
 	elmRet = []
+	mlpRet = []
+	dtRet = []
+	rfRet = []
 	
 	L = 1000
 	l = 2**-1
@@ -1554,7 +1767,10 @@ def wine():
 		
 		wisardAccs = [0.]
 		elmAccs = [0.]
-		
+		mlpAccs = [0.]
+		dtAccs = [0.]
+		rfAccs = [0.]
+
 		for i in range(1,min):
 			
 			#wisard
@@ -1598,17 +1814,59 @@ def wine():
 			
 			elmAccs.append(elmAcc)
 				
+			#mlp
+
+			clf = MLPClassifier(solver='lbfgs', alpha=1e-5, hidden_layer_sizes=(5, 2), random_state=1)
+			clf.fit(batchX, batchY)
+			mlp_pred = clf.predict(elm_X_test)
+			mlpAcc = accuracy_score(OH_Y_test, mlp_pred)
+			mlpAccs.append(mlpAcc)
+
+			#decision tree
+
+			clf = DecisionTreeClassifier(max_depth=None, min_samples_split=2,random_state=0)
+			clf.fit(batchX, batchY)
+			dt_pred = clf.predict(elm_X_test)
+			dtAcc = accuracy_score(OH_Y_test, dt_pred)
+			dtAccs.append(dtAcc)
+
+			#random forest
+
+			clf = RandomForestClassifier(n_estimators=10, max_depth=None,min_samples_split=2, random_state=0)
+			clf.fit(batchX, batchY)
+			rf_pred = clf.predict(elm_X_test)
+			rfAcc = accuracy_score(OH_Y_test, rf_pred)
+			rfAccs.append(rfAcc)
+				
 		wisardRet.append(wisardAccs)
 		elmRet.append(elmAccs)
+		mlpRet.append(mlpAccs)
+		dtRet.append(dtAccs)
+		rfRet.append(rfAccs)
 	
 	wisardRet = np.array(evenArray(wisardRet))
 	elmRet = np.array(evenArray(elmRet))
+	mlpRet = np.array(evenArray(mlpRet))
+	dtRet = np.array(evenArray(dtRet))
+	rfRet = np.array(evenArray(rfRet))
 		
 	wisardMean = np.mean(wisardRet, axis=0)
 	elmMean = np.mean(elmRet, axis=0)
+	mlpMean = np.mean(mlpRet,axis=0)
+	dtMean = np.mean(dtRet,axis=0)
+	rfMean = np.mean(rfRet,axis=0)
 
-	plt.plot(wisardMean, label='wisard')
-	plt.plot(elmMean, label='elm')
+	wisardStDev = np.std(wisardRet, axis=0)
+	elmStDev = np.std(elmRet, axis=0)
+	mlpStDev = np.std(mlpRet,axis=0)
+	dtStDev = np.std(dtRet,axis=0)
+	rfStDev = np.std(rfRet,axis=0)
+
+	plt.errorbar(np.arange(0,wisardMean.shape[0]),wisardMean,yerr=wisardStDev, label='wisard')
+	plt.errorbar(np.arange(0,elmMean.shape[0]), elmMean,yerr=elmStDev, label='elm')
+	plt.errorbar(np.arange(0,mlpMean.shape[0]), mlpMean,yerr=mlpStDev, label='mlp')
+	plt.errorbar(np.arange(0,dtMean.shape[0]), dtMean,yerr=dtStDev, label='dt')
+	plt.errorbar(np.arange(0,rfMean.shape[0]), rfMean,yerr=rfStDev, label='rf')
 	plt.ylabel("Accuracy")
 	plt.xlabel("Size of training data")
 	plt.legend()
@@ -1618,13 +1876,17 @@ def wine():
 
 	plt.clf()
 
-	plt.plot(wisardMean, label='wisard')
-	plt.plot(elmMean, label='elm')
+	plt.errorbar(np.arange(0,wisardMean.shape[0]),wisardMean,yerr=wisardStDev, label='wisard')
+	plt.errorbar(np.arange(0,elmMean.shape[0]), elmMean,yerr=elmStDev, label='elm')
+	plt.errorbar(np.arange(0,mlpMean.shape[0]), mlpMean,yerr=mlpStDev, label='mlp')
+	plt.errorbar(np.arange(0,dtMean.shape[0]), dtMean,yerr=dtStDev, label='dt')
+	plt.errorbar(np.arange(0,rfMean.shape[0]), rfMean,yerr=rfStDev, label='rf')
 	plt.ylabel("Accuracy")
 	plt.xlabel("Size of training data")
 	plt.legend()
 	plt.title('wine')
 	plt.savefig('Images/wine.png')
+
 	plt.clf()
 
 def wine2():
@@ -1639,7 +1901,10 @@ def wine2():
 	
 	wisardRet = []
 	elmRet = []
-	
+	mlpRet = []
+	dtRet = []
+	rfRet = []
+
 	L = 1000
 	l = 2**-1
 	
@@ -1655,6 +1920,9 @@ def wine2():
 
 		wisardAccs = [0.]
 		elmAccs = [0.]
+		mlpAccs = [0.]
+		dtAccs = [0.]
+		rfAccs = [0.]
 
 		for i in range(1, min):
 
@@ -1713,36 +1981,81 @@ def wine2():
 			
 			elmAccs.append(elmAcc)
 	
+			#mlp
+
+			clf = MLPClassifier(solver='lbfgs', alpha=1e-5, hidden_layer_sizes=(5, 2), random_state=1)
+			clf.fit(eX_train, OH_Y_train)
+			mlp_pred = clf.predict(eX_test)
+			mlpAcc = accuracy_score(OH_Y_test, mlp_pred)
+			mlpAccs.append(mlpAcc)
+
+			#decision tree
+
+			clf = DecisionTreeClassifier(max_depth=None, min_samples_split=2,random_state=0)
+			clf.fit(eX_train, OH_Y_train)
+			dt_pred = clf.predict(eX_test)
+			dtAcc = accuracy_score(OH_Y_test, dt_pred)
+			dtAccs.append(dtAcc)
+
+			#random forest
+
+			clf = RandomForestClassifier(n_estimators=10, max_depth=None,min_samples_split=2, random_state=0)
+			clf.fit(eX_train, OH_Y_train)
+			rf_pred = clf.predict(eX_test)
+			rfAcc = accuracy_score(OH_Y_test, rf_pred)
+			rfAccs.append(rfAcc)
+	
 		wisardRet.append(wisardAccs)
 		elmRet.append(elmAccs)
+		mlpRet.append(mlpAccs)
+		dtRet.append(dtAccs)
+		rfRet.append(rfAccs)
 	
 	wisardRet = np.array(evenArray(wisardRet))
 	elmRet = np.array(evenArray(elmRet))
+	mlpRet = np.array(evenArray(mlpRet))
+	dtRet = np.array(evenArray(dtRet))
+	rfRet = np.array(evenArray(rfRet))
 		
 	wisardMean = np.mean(wisardRet, axis=0)
 	elmMean = np.mean(elmRet, axis=0)
+	mlpMean = np.mean(mlpRet,axis=0)
+	dtMean = np.mean(dtRet,axis=0)
+	rfMean = np.mean(rfRet,axis=0)
 
-	plt.plot(wisardMean, label='wisard')
-	plt.plot(elmMean, label='elm')
+	wisardStDev = np.std(wisardRet, axis=0)
+	elmStDev = np.std(elmRet, axis=0)
+	mlpStDev = np.std(mlpRet,axis=0)
+	dtStDev = np.std(dtRet,axis=0)
+	rfStDev = np.std(rfRet,axis=0)
+
+	plt.errorbar(np.arange(0,wisardMean.shape[0]),wisardMean,yerr=wisardStDev, label='wisard')
+	plt.errorbar(np.arange(0,elmMean.shape[0]), elmMean,yerr=elmStDev, label='elm')
+	plt.errorbar(np.arange(0,mlpMean.shape[0]), mlpMean,yerr=mlpStDev, label='mlp')
+	plt.errorbar(np.arange(0,dtMean.shape[0]), dtMean,yerr=dtStDev, label='dt')
+	plt.errorbar(np.arange(0,rfMean.shape[0]), rfMean,yerr=rfStDev, label='rf')
 	plt.ylabel("Accuracy")
 	plt.xlabel("Size of training data")
 	plt.legend()
 	plt.xscale('log')
-	plt.title('wine-log')
+	plt.title('wine-logv2')
 	plt.savefig('Images/wine-logv2.png')
 
 	plt.clf()
 
-	plt.plot(wisardMean, label='wisard')
-	plt.plot(elmMean, label='elm')
+	plt.errorbar(np.arange(0,wisardMean.shape[0]),wisardMean,yerr=wisardStDev, label='wisard')
+	plt.errorbar(np.arange(0,elmMean.shape[0]), elmMean,yerr=elmStDev, label='elm')
+	plt.errorbar(np.arange(0,mlpMean.shape[0]), mlpMean,yerr=mlpStDev, label='mlp')
+	plt.errorbar(np.arange(0,dtMean.shape[0]), dtMean,yerr=dtStDev, label='dt')
+	plt.errorbar(np.arange(0,rfMean.shape[0]), rfMean,yerr=rfStDev, label='rf')
 	plt.ylabel("Accuracy")
 	plt.xlabel("Size of training data")
 	plt.legend()
-	plt.title('wine')
+	plt.title('winev2')
 	plt.savefig('Images/winev2.png')
+
 	plt.clf()
 
-
 #ok
-#wine()
-#wine2()
+wine()
+wine2()
